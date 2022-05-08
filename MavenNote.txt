@@ -335,7 +335,52 @@ test-compile    testCompile           maven-compiler-plugin
         moudle>../HelloFriend<moudle>
         <moudle>../xxx</moudle>
     <moudles>
------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    (3)使用方式：在聚合工程的pom.xml上点击右键：run as->maven install
+        在导入时，标签的<moudle></moudle>顺序不影响，Maven会自动识别
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Mavne Web工程的自动部署
+<!--配置当前构建工程的特殊设置-->
+<build>
+    <filnalname>xxx</filnalname>
+    //配置过程中需要的插件
+    <plugins>
+        <plugin>
+              //cargo是一家专门从“启动Servlet容器的软件组织”
+            <groupId>org.cadehaus.cargo</groupId>
+            <artifactId></artifactId>
+            <version></version>
+            <configuration>
+                <container>
+                    <containerId>tomcat</containerId>
+                    <home>路径</home>
+                </container>
+            </configuration>
+            <configuration>
+                <type>existing</type>
+                <home>路径</home>
+                <properties>
+                <!--端口号为8080无需配置-->
+                    <cargo.servlet.port>8989</cargo.servlet.cargo>
+                </properties>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>catgo.run</id>
+                        <!--生命周期的阶段-->
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run<goal>
+                        </goals>
+                    </execution>
+                </executions>
+        <plugin>
+    </plugins>
+</build>
+
+查找依赖信息
+
+到http://mvnrepository.com/搜索需要的jar包执行信息
+---------------------------------------------------------------------------------------------------------------------------------------------------
 重要度
     目录结构*
     pom*
