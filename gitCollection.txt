@@ -255,4 +255,3 @@ git pull name（连接） xxx（想要合并的远程分支）
 仓库主人也可以继续发消息给该人
 点开可以进行审核
 然后点击Merge pull request (需要添加合并的信息)
-w
