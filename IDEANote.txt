@@ -166,4 +166,3 @@ javaDoc 生成java文档
 可以清除索引：
     invalidate Caches/Restart
     可以在清除时备份Local History
-    
