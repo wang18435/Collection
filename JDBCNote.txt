@@ -1,0 +1,119 @@
+数据持久化:把数据保存到可掉电式存储设备中以供之后使用。大多数情况下，特别是企业级应用，数据持久化意味着将内存中的数据保存到硬盘上加以“固化”，而持久化的实现过程大多数通过
+关系型数据库来完成。
+持久化的主要应用是将内存中的数据库存储在关系型数据库中，当然也可以存储在磁盘文件、xml数据文件中。
+JDBC是访问数据库的基石。
+JDBC是一个独立于特定数据库管理系统、通用的SQL数据库存取和操作的公共接口。
+
+public Connection getConnection() throws Exception{
+    String driverClass=null;
+    String jdbcUrl=null;
+    String user=null;
+    String password=null;
+    //读取类路径下的jdbc.properties
+    Input in=getClass.getClassLoader().getResourceAsStream("jdbc.properties");
+    Properties properties=new Properties();
+    properties.load(in);
+    driverClass=properties.getProperties("driver");
+    jdbcUrl=properties.getProperties("jdbcUrl");
+    user=properties.getProperties("user");
+    passsword=properties.getProperties("password");
+    Driver driver=(Driver)Class.forname(driverClass).newInstance();
+    Properties info=new Properties();
+    info.put("user",user);
+    info.put("passsword",password);
+    Connection connection=driver.connect(jdbcUrl,info);
+    return connection
+} 
+根目录下新建jdbc.properties
+driver=com.mysql.jdbc.Driver
+jdbcUrl=jdbc:mysql://localhost:3306/day
+user=root
+password=
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+通过DriverManager
+//读取Properties文件
+xxxx
+
+//加载驱动程序
+Class.forName(driverClass);    //对应的驱动程序里有静态代码块
+static{
+    DriverManager.registerDriver(Class.forName(driverClass).newInstance);
+}
+
+//通过DriverManager获取Connection
+Connection connection=DriverManager.getConnection(jdbcUrl,user,password);
+
+DriverManager好处
+1.可以通过重载的getConnection()获取数据库连接，较为方便
+2.可以管理多个驱动程序
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+通过Statement执行更新操作
+//获取数据库连接
+Connection connect=getConnection();
+//准备插入的语句
+String sql="xxx";
+//获取操作SQL语句的Statement对象
+Statement statement=connect.createStatement();
+//执行语句
+
+statement.excuteupdate（sql）;
+//关闭Statement
+statement.close();
+//关闭Conncetion连接
+connect.close();
+
+可以设计一个JDBCUtils，里面使用静态方法，避免一直重复的操作。
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ResultSet操作结果（查询）
+通过指针移动（next（））
+数组new Object[]{}
+//获取Connection
+Connection conn=getConnection();
+//获取Statement
+Statement statement=conn.createStatement();
+//准备SQL
+String sql="";
+//执行查询，得到ResultSet
+ResultSet rs=statement.excuteQuery(sql);
+//处理ResultSet
+while(rs.next()){
+int id=rs.getInt(1);
+'''
+
+}
+//关闭各种连接
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+PreparedStatement（拼Sql语句过于恶心）
+是Statement的子接口，可以传入带占位符的SQL语句
+//获取PreparedStatement
+ps=conn.preparedStatement（sql）;
+ps.setxxx(index,xxx);
+
+Connection conn=null;
+PreparedStatement=null;
+try{
+    conn=JBUCTools.getConnection();
+    PreparedStatement=conn.PreparedStatement(sql);
+
+    for(int i=0;i<args.length;i++){
+        PreparedStatement.setObject(i+1,args[i]);
+    }
+
+    PreparedStatement.excuteupdate();
+ 
+}catch{
+    e.prinkStackTrace();
+}finally{
+    JDBCTools.releaseDB(null,PreparedStatement,conn);
+}
+可以有效的防止SQL注入
+例如：
+"select * from users where username= '"+username+"' and "+"password= '"password+ "'";
+select * from users where username= 'a' or password = 'AND passsword=' or '1'='1';
+username=a' or password = 
+passsword= or '1'='1
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
