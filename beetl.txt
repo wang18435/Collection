@@ -1,0 +1,164 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+这是一个markdown文本
+select
+===
+select * from user where 1=1
+@if(!isEmpty(age)){
+and age = #age#
+@}
+@if(!isEmpty(name)){
+and name = #name#
+@}
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+采用md格式，===上面是sql语句在本文件里的唯一标示，下面则是sql语句。
+@ 和回车符号是定界符号，可以在里面写beetl语句。
+"#" 是占位符号，生成sql语句得时候，将输出？，如果你想输出表达式值，需要用text函数，或者任何以db开头的函数，引擎则认为是直接输出文本。
+isEmpty是beetl的一个函数，用来判断变量是否为空或者是否不存在.
+文件名约定为类名，首字母小写。
+sql模板采用beetl原因是因为beetl 语法类似js，且对模板渲染做了特定优化，相比于mybatis，更加容易掌握和功能强大，可读性更好，也容易在java和数据库之间迁移sql语句
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+代码&sql生成
+
+public static void main(String[] args){
+    SqlManager sqlManager  = ...... //同上面的例子
+    sqlManager.genPojoCodeToConsole("user");
+    sqlManager.genSQLTemplateToConsole("user");
+}
+
+注意：
+生成的代码符合这样的规则：
+生成属性的时候，id总是在前面，后面依次是类型为Integer的类型，最后面是日期类型，剩下的按照字母排序放到中间。
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+简单查询（自动生成sql）
+public T unique(Class clazz,Object pk) 根据主键查询，如果未找到，抛出异常.
+
+public T single(Class clazz,Object pk) 根据主键查询，如果未找到，返回null.
+
+public List all(Class clazz) 查询出所有结果集
+
+public List all(Class clazz, int start, int size) 翻页
+
+public int allCount(Class<?> clazz) 总数
+
+（Query）单表查询
+SQLManager提供Query类可以实现单表查询操作
+
+SQLManager sql = ...
+List<User> list = sql.query(User.class).andEq("name","hi").orderBy("create_date").select();
+sql.query(User.class) 返回了Query类用于单表查询
+
+如果是Java8，则可以使用lambda表示列名
+
+List<User> list1  = sql.lambdaQuery(User.class).andEq(User::getName, "hi").orderBy(User::getCreateDate).select();
+lamdba()方法返回了一个LamdbaQuery 类，列名支持采用lambda。
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+template查询
+public List template(T t) 根据模板查询，返回所有符合这个模板的数据库 同上，mapper可以提供额外的映射，如处理一对多，一对一
+public T templateOne(T t) 根据模板查询，返回一条结果，如果没有找到，返回null
+public List template(T t,int start,int size) 同上，可以翻页
+public long templateCount(T t) 获取符合条件的个数
+public List template(Class target,Object paras,long start, long size) 模板查询，参数是paras，可以是Map或者普通对象
+public long templateCount(Class target, Object paras) 获取符合条件个数
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+通过sqlid查询,sql语句在md文件里
+public List select(String sqlId, Class clazz, Map<String, Object> paras) 根据sqlid来查询，参数是个map
+
+public List select(String sqlId, Class clazz, Object paras) 根据sqlid来查询，参数是个pojo
+
+public List select(String sqlId, Class clazz) 根据sqlid来查询，无参数
+
+public T selectSingle(String id,Object paras, Class target) 根据sqlid查询，输入是Pojo，将对应的唯一值映射成指定的target对象，如果未找到，则返回空。需要注意的时候，有时候结果集本身是空，这时候建议使用unique
+
+public T selectSingle(String id,Map<String, Object> paras, Class target) 根据sqlid查询，输入是Map，将对应的唯一值映射成指定的target对象，如果未找到，则返回空。需要注意的时候，有时候结果集本身是空，这时候建议使用unique
+
+public T selectUnique(String id,Object paras, Class target) 根据sqlid查询，输入是Pojo或者Map，将对应的唯一值映射成指定的target对象,如果未找到，则抛出异常
+
+public T selectUnique(String id,Map<String, Object> paras, Class target) 根据sqlid查询，输入是Pojo或者Map，将对应的唯一值映射成指定的target对象,如果未找到，则抛出异常
+
+public Integer intValue(String id,Object paras) 查询结果映射成Integer，如果找不到，返回null，输入是object
+
+public Integer intValue(String id,Map paras) 查询结果映射成Integer，如果找不到，返回null，输入是map，其他还有 longValue，bigDecimalValue
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+指定范围查询
+public List select(String sqlId, Class clazz, Map<String, Object> paras, int start, int size)， 查询指定范围
+public List select(String sqlId, Class clazz, Object paras, int start, int size) ，查询指定范围
+beetlsql 默认从1 开始，自动翻译为目标数据库的的起始行，如mysql的0，oracle的1
+
+如果你想从0开始，参考11章，配置beetlsql
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+翻页查询API
+public <T> void pageQuery(String sqlId,Class<T> clazz,PageQuery query)
+BeetlSQL 提供一个PageQuery对象,用于web应用的翻页查询,BeetlSql假定有sqlId 和sqlId$count,俩个sqlId,并用这来个来翻页和查询结果总数.如:
+
+queryNewUser
+===
+select * from user order by id desc ;
+
+queryNewUser$count
+===
+select count(1) from user
+对于俩个相似的sql语句,你可以使用use函数,把公共部分提炼出来.
+
+大部分情况下,都不需要2个sql来完成,一个sql也可以,要求使用page函数或者pageTag标签,这样才能同时获得查询结果集总数和当前查询的结果
+
+queryNewUser
+===
+select
+@pageTag(){
+a.*,b.name role_name
+@}
+from user a left join b ...
+如上sql,会在pageQuery查询的时候转为俩条sql语句
+
+select count(1) from user a left join b...
+select a.*,b.name role_name  from user a left join b...
+如果字段较多,为了输出方便,也可以使用pageTag,字段较少,用page函数也可以. ,具体参考pageTag和page函数说明.翻页代码如下
+
+//从第一页开始查询,无参数
+PageQuery query = new PageQuery();
+sql.pageQuery("user.queryNewUser", User.class,query);
+System.out.println(query.getTotalPage());
+System.out.println(query.getTotalRow());
+System.out.println(query.getPageNumber());
+List<User> list = query.getList();
+PageQuery 对象也提供了 orderBy属性，用于数据库排序，如 "id desc"
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+pageQuery的使用方法
+PageQuery query = new PageQuery();
+sql.pageQuery("user.queryNewUser", User.class,query);
+System.out.println(query.getTotalPage());
+System.out.println(query.getTotalRow());
+System.out.println(query.getPageNumber());
+List<User> list = query.getList();
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+也可以直接执行sql语句
+
+public List execute(String sql,Class clazz, Object paras)
+public List execute(String sql,Class clazz, Map paras)
+public int executeUpdate(String sql,Object paras) 返回成功执行条数
+public int executeUpdate(String sql,Map paras) 返回成功执行条数
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+执行JDBCsql
+查询 public List execute(SQLReady p,Class clazz) SQLReady包含了需要执行的sql语句和参数，clazz是查询结果，如
+List<User> list = sqlManager.execute(new SQLReady("select * from user where name=? and age = ?","xiandafu",18),User.class);)
+public PageQuery execute(SQLReady p, Class clazz, PageQuery pageQuery)
+String  jdbcSql = "  select *from user order by id";
+PageQuery query = new PageQuery(1,20);
+query = sql.execute(new SQLReady(jdbcSql), User.class, query);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+生成POJO代码和SQ片段
+
+sql.genAll("com.test", new GenConfig(), new GenFilter(){
+    public boolean accept(String tableName){
+        if(tableName.equalsIgnoreCase("user")){
+            return true;
+        }else{
+            return false;
+        }
+        // return false
+    }
+});

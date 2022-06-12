@@ -251,3 +251,123 @@ Integer中被mybatis默认设置类型别名
 4.查询一条数据为map集合
 
 5.查询多条数据为map集合
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+特殊的SQL执行
+1. mybatis的模糊查询
+
+2.批量删除
+使用${}
+#{}会自动加''
+
+3.动态设置表名
+select * from ${}
+只能使用${}，#{}会添加‘’
+
+4.添加功能获取自增的主键
+将主键传送在传递的实体类的某个属性上
+
+<insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
+    insert into t_user values(null,#{username},#{password},#{age},#{sex},#{email})
+</insert>
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+字段名和属性名不一致
+自定义映射resultMap
+1.为字段起别名，保持和属性名的一致
+2.全局配置
+    <settings>
+        <!--将下划线自动映射为驼峰-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+3.通过级联属性解决多对一的关系
+1.级联属性赋值
+ <select id="getEmpAndDept" resultMap="getEmpAndDeptmap">
+        select * from t_emp left join t_dept on t_emp.did=t_dept.did where t_emp.eid=#{eid}
+    </select>
+    <resultMap id="getEmpAndDeptmap" type="emp">
+        <id property="eid" column="eid"></id>
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+        <result property="dept.id" column="did"></result>
+        <result property="dept.deptName" column="dept_name"></result>
+    </resultMap>
+2.通过association
+    <select id="getEmpAndDept" resultMap="getEmpAndDeptmap">
+        select * from t_emp left join t_dept on t_emp.did=t_dept.did where t_emp.eid=#{eid}
+    </select>
+    <resultMap id="getEmpAndDeptmap" type="emp">
+        <id property="eid" column="eid"></id>
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+        <association property="dept" javaType="Dept">
+            <id property="id" column="did"></id>
+            <result property="deptName" column="dept_name"></result>
+        </association>
+    </resultMap>
+3.通过分布查询解决多对一的映射关系
+    <select id="getEmp1" resultMap="getEmpAndDeptmap">
+        select * from t_emp where eid=#{eid}
+    </select>
+    <resultMap id="getEmpAndDeptmap" type="emp">
+        <id property="eid" column="eid"></id>
+        <result property="empName" column="emp_name"></result>
+        <result property="age" column="age"></result>
+        <result property="sex" column="sex"></result>
+        <result property="email" column="email"></result>
+        <association property="dept"
+                     select="com.tyut.mapper.DeptMapper.getEmpAndDept"
+                     column="did">
+        </association>
+    </resultMap>
+好处：可以实现延迟加载（懒加载），只访问员工就只加载员工信息，需要部门信息就加在部门信息
+4.延迟加载
+    <settings>
+        <!--将下划线自动映射为驼峰-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--开启延迟加载-->
+        <setting name="lazyLoadingEnabled" value="true"/>
+    </settings>
+获取某个字段只会加载那个语句
+
+效果：
+DEBUG 06-12 13:11:45,596 ==>  Preparing: select * from t_emp where eid=?               (BaseJdbcLogger.java:137) 
+DEBUG 06-12 13:11:45,621 ==> Parameters: 1(Integer)               (BaseJdbcLogger.java:137) 
+DEBUG 06-12 13:11:45,684 <==      Total: 1               (BaseJdbcLogger.java:137) 
+zhangsan
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+DEBUG 06-12 13:11:45,684 ==>  Preparing: select did id,dept_name from t_dept where did=?               (BaseJdbcLogger.java:137) 
+DEBUG 06-12 13:11:45,685 ==> Parameters: 1(Integer)               (BaseJdbcLogger.java:137) 
+DEBUG 06-12 13:11:45,687 <==      Total: 1               (BaseJdbcLogger.java:137) 
+Dept{id=1, deptName='a部'}
+
+<association fetchType=""></association>设置这个可以实现该部分的延迟加载
+值为eager和lazy
+_________________________________________________________________________________________________________________________________________________
+多对一，对象，一对多，集合
+_________________________________________________________________________________________________________________________________________________
+一对多的问题
+1.使用collection标签
+    <select id="getDeptAndEmp" resultMap="x1">
+        select * from t_dept left join t_emp on t_dept.did=t_emp.did where t_dept.did=#{did}
+    </select>
+    <resultMap id="x1" type="dept">
+        <id property="id" column="did"></id>
+        <result property="deptName" column="dept_name"></result>
+        <collection property="empList" ofType="emp">
+            <id property="eid" column="eid"></id>
+            <result property="empName" column="emp_name"></result>
+            <result property="age" column="age"></result>
+            <result property="sex" column="sex"></result>
+            <result property="email" column="email"></result>
+        </collection>
+    </resultMap>
+2.分布查询
+略，类似于多对一，只是使用的是collection标签
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+动态SQL
