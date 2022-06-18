@@ -108,5 +108,40 @@ html基本语法
 
 HTML常用标签
 1.文档结构标签
+<html></html>
+<head></head>
+<body></body>
+
 2.文本格式标签
+<title></title>
+<hi></hi>
+<p></p>
+<pre></pre>表示预定义文本
+<blockquote></blockquote>表示引用文本
+
 3.字符格式标签
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <p>例如，针对下面这个一元二次方程：</p>
+        <p><i>x</i><sup>2</sup>-<b>5</b><i>x</i>+<b>4</b>=0</p>
+        <p>我们使用<big><b>分解因式法</b></big>来演示解题思路如下：</p>
+        <p><small>由：</small>(<i>x</i>-1)(<i>x</i>-4)=0</p>
+        <p><small>得：</small><br><i>x</i><sub>1</sub>=1<br>
+        <i>x</i><sub>2</sub>=4</p>
+        
+    </body>
+</html>
+4.列表标签
+<ul></ul>
+<ol></ol>
+<li></li>
+还可以定义列表
+<dl></dl> 表示定义列表
+<dt><dt>   表示词条
+<dd><dd>     表示解释
+5.链接标签
+<a></a>
