@@ -5,12 +5,13 @@ Mybatis的逆向工程
 Mybatis的缓存
 Mybatis简介
 Mybatis框架搭建
-Mybatis基础和功能（1.Mybatis的核心配置文件的讲解与编写
-2.Mybatis的映射文件的讲解和编写
-3.Mybatis实现增删改查
-4.Mybatis获取参数值的两种方式
-5.Mybatis的自定义映射resultMap
-6.Mybatis的动态SQL）
+Mybatis基础和功能（
+    1.Mybatis的核心配置文件的讲解与编写
+    2.Mybatis的映射文件的讲解和编写
+    3.Mybatis实现增删改查
+    4.Mybatis获取参数值的两种方式
+    5.Mybatis的自定义映射resultMap
+    6.Mybatis的动态SQL）
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Mybatis封装的JDBC（与JDBC功能相同）
 
@@ -66,6 +67,8 @@ b>引入依赖
             <version>3.5.7</version>
         </dependency>
     </dependencies>
+--------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------
 3.创建Mybatis的核心配置文件
 习惯上命名为mybatis-config.xml,这个文件名仅仅是建议，并非强制要求。将来整合Spring之后，这个配置文件可以省略，所以操作时可以复制，粘贴
 
@@ -81,22 +84,33 @@ b>引入依赖
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <!--必定是！DOCTYPE 后面的单词-->
 <configuration>
+    <properties resource="jdbc.properties"></properties>
+
+    <settings>
+        <!--将下划线自动映射为驼峰-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--开启延迟加载-->
+        <setting name="lazyLoadingEnabled" value="true"/>
+    </settings>
+    <typeAliases >
+        <package name="com.tyut.pojo"/>
+    </typeAliases>
     <!--配置连接数据库的环境-->
     <environments default="development">
         <environment id="development">
             <transactionManager type="JDBC"></transactionManager>
             <!--数据库连接池-->
             <dataSource type="POOLED">
-                <property name="driver" value="com.mysql.jdbc.Driver"/>
-                <property name="url" value="jdbc:mysql://localhost:3306/mybatis"/>
-                <property name="username" value="root"/>
-                <property name="password" value=""/>
+                <property name="driver" value="${jdbc.driver}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.url}"/>
+                <property name="password" value="${jdbc.password}"/>
             </dataSource>
         </environment>
     </environments>
     <!--引入映射文件-->
     <mappers>
-        <mapper resource="org/mybatis/example/BlogMapper.xml"></mapper>
+        <package name="com.tyut.mapper"/>
     </mappers>
 </configuration>
 
@@ -371,3 +385,29 @@ ________________________________________________________________________________
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 动态SQL
+Mybatis提供的动态SQL技术是根据一种特定条件动态拼装SQL语句的功能，它存在的意义是为了解决拼接SQL语句字符串时的痛点问题。
+1.if标签
+2.where 可以自动删除and||or
+3.trim
+    prefix|suffix:将trim标签中的内容前面或后面添加到指定内容
+    suffixOverrieds|prefixOverrides:将trim标签中的内容前面或后面去掉指定内容
+    若标签中没有内容，trim标签没有任何效果
+4.choose、when、otherwise
+5.foreach
+可以实现collection，item，separtor，open，close参数
+--------------------------------------------------------------------------------------------------------------------------------------------------
+一级缓存是sqlSession级别的，通过同一个sqlSession查询的数据会被缓存，下次查询相同的数据，就会从缓冲中直接获取，不会从数据库重新访问。
+使 一级缓存失效的四种情况：
+    1.不同的sqlSession对应不同的一级缓存
+    2.同一个sqlSession但是查询条件不同
+    3.同一个sqlSession两次查询期间执行了任何一次增删改查操作
+    4.同一个sqlSession两次查询期间手动清空了缓存
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+二级缓存是sqlSessionFactory级别，通过对同一个sqlSessionFactory创建的sqlSession查询的结果会被缓存；此后若再次执行相同的查询语句。结果就会从缓存中获取。
+
+二级缓存开启的条件：
+a>在核心配置文件中，设置全局配置属性cacheEnabled="true",默认为true，不需要设置
+b>在映射文件中设置标签<cache/>
+c>二级缓存必须在sqlSession关闭或提交之后有效
+
